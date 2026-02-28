@@ -7,6 +7,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Web3 主题颜色（App.jsx 使用的）
+        web3: {
+          dark: '#0a0a1a',
+          card: '#12121a',
+          border: '#2a2a40',
+          accent: '#00d4ff',
+          'accent-hover': '#00a8cc',
+        },
         // 赛博朋克深色背景
         cyber: {
           dark: '#0a0a1a',
