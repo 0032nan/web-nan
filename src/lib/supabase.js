@@ -434,50 +434,78 @@ const defaultCategories = [
 
 export const localDB = {
   getCategories: () => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) {
-      const parsed = JSON.parse(data)
-      return parsed.categories || defaultCategories
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      if (data) {
+        const parsed = JSON.parse(data)
+        return parsed.categories || defaultCategories
+      }
+    } catch (e) {
+      console.error('Error loading categories:', e)
     }
     return defaultCategories
   },
   
   getBookmarks: () => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    if (data) {
-      const parsed = JSON.parse(data)
-      return parsed.bookmarks || defaultBookmarks
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      if (data) {
+        const parsed = JSON.parse(data)
+        return parsed.bookmarks || defaultBookmarks
+      }
+    } catch (e) {
+      console.error('Error loading bookmarks:', e)
     }
     return defaultBookmarks
   },
   
   saveCategories: (categories) => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    const parsed = data ? JSON.parse(data) : { bookmarks: defaultBookmarks }
-    parsed.categories = categories
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      const parsed = data ? JSON.parse(data) : { bookmarks: defaultBookmarks }
+      parsed.categories = categories
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+    } catch (e) {
+      console.error('Error saving categories:', e)
+    }
   },
   
   saveBookmarks: (bookmarks) => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    const parsed = data ? JSON.parse(data) : { categories: defaultCategories }
-    parsed.bookmarks = bookmarks
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      const parsed = data ? JSON.parse(data) : { categories: defaultCategories }
+      parsed.bookmarks = bookmarks
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
+    } catch (e) {
+      console.error('Error saving bookmarks:', e)
+    }
   },
   
   exportData: () => {
-    const data = localStorage.getItem(STORAGE_KEY)
-    return data || JSON.stringify({ categories: defaultCategories, bookmarks: defaultBookmarks })
+    try {
+      const data = localStorage.getItem(STORAGE_KEY)
+      return data || JSON.stringify({ categories: defaultCategories, bookmarks: defaultBookmarks })
+    } catch (e) {
+      return JSON.stringify({ categories: defaultCategories, bookmarks: defaultBookmarks })
+    }
   },
   
   importData: (jsonData) => {
-    localStorage.setItem(STORAGE_KEY, jsonData)
+    try {
+      localStorage.setItem(STORAGE_KEY, jsonData)
+    } catch (e) {
+      console.error('Error importing data:', e)
+    }
   },
   
   resetToDefault: () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
-      categories: defaultCategories, 
-      bookmarks: defaultBookmarks 
-    }))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+        categories: defaultCategories, 
+        bookmarks: defaultBookmarks 
+      }))
+    } catch (e) {
+      console.error('Error resetting data:', e)
+    }
   }
 }
