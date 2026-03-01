@@ -5,9 +5,29 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>web3-bookmarks</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0a0a1a;
+        color: white;
+        font-family: sans-serif;
+      }
+      #root:empty::before {
+        content: 'Loading...';
+        display: block;
+        text-align: center;
+        padding: 50px;
+        color: #00d4ff;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <noscript>
+      <div style="padding:20px;color:red;text-align:center;">
+        JavaScript is required to run this app.
+      </div>
+    </noscript>
   </body>
 </html>
