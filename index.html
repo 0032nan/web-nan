@@ -20,6 +20,11 @@
         color: #00d4ff;
       }
     </style>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        document.body.innerHTML = '<div style="padding:20px;color:red;background:#0a0a1a;min-height:100vh;"><h1>JavaScript Error</h1><pre>' + msg + '<br>Line: ' + line + '</pre></div>';
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
