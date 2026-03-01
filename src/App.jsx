@@ -22,6 +22,94 @@ import AddCategoryModal from './components/AddCategoryModal'
 import SearchResults from './components/SearchResults'
 import './index.css'
 
+// 密码保护组件
+function PasswordGate({ children }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+
+  // 从 localStorage 检查是否已登录
+  useEffect(() => {
+    const auth = localStorage.getItem('web3-bookmarks-auth')
+    if (auth === 'true') {
+      setIsAuthenticated(true)
+    }
+  }, [])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // 默认密码: nan123 (你可以修改)
+    if (password === 'nan123') {
+      localStorage.setItem('web3-bookmarks-auth', 'true')
+      setIsAuthenticated(true)
+      setError('')
+    } else {
+      setError('密码错误')
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('web3-bookmarks-auth')
+    setIsAuthenticated(false)
+    setPassword('')
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-web3-dark flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-web3-card border border-web3-border rounded-2xl p-8 shadow-2xl">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">W3</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Web3 Bookmarks</h1>
+            <p className="text-gray-400">请输入密码访问</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="输入密码"
+                className="w-full px-4 py-3 bg-web3-dark border border-web3-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
+              />
+            </div>
+
+            {error && (
+              <p className="text-red-400 text-sm">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full px-4 py-3 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg font-medium transition-colors"
+            >
+              进入
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            提示: 默认密码是 nan123
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <>
+      {children}
+      <button
+        onClick={handleLogout}
+        className="fixed bottom-4 right-4 px-4 py-2 bg-web3-card border border-web3-border text-gray-400 rounded-lg hover:text-white transition-colors text-sm"
+      >
+        退出登录
+      </button>
+    </>
+  )
+}
+
 function App() {
   const [categories, setCategories] = useState([])
   const [bookmarks, setBookmarks] = useState([])
@@ -86,7 +174,6 @@ function App() {
     setActiveId(null)
 
     if (over && active.id !== over.id) {
-      // Check if dragging a category or bookmark
       const isCategory = categories.some((c) => c.id === active.id)
       
       if (isCategory) {
@@ -227,165 +314,167 @@ function App() {
     : []
 
   return (
-    <div className="min-h-screen bg-web3-dark">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-web3-card/80 backdrop-blur-md border-b border-web3-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center web3-glow">
-                <span className="text-white font-bold text-lg">W3</span>
-              </div>
-              <h1 className="text-xl font-bold text-white">Web3 Bookmarks</h1>
-              {isSupabaseConnected && (
-                <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                  已同步
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="搜索书签..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-10 pr-4 py-2 bg-web3-dark border border-web3-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
-                />
-              </div>
-
-              {/* Bulk actions */}
-              {selectedBookmarks.size > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-web3-accent/20 rounded-lg border border-web3-accent/30">
-                  <span className="text-sm text-web3-accent">
-                    已选择 {selectedBookmarks.size} 个
-                  </span>
-                  <button
-                    onClick={openSelectedBookmarks}
-                    className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
-                    title="一键打开"
-                  >
-                    <ExternalLink className="w-4 h-4 text-web3-accent" />
-                  </button>
-                  <button
-                    onClick={clearSelection}
-                    className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
-                    title="清除选择"
-                  >
-                    <span className="text-web3-accent text-lg leading-none">×</span>
-                  </button>
+    <PasswordGate>
+      <div className="min-h-screen bg-web3-dark">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-web3-card/80 backdrop-blur-md border-b border-web3-border">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center web3-glow">
+                  <span className="text-white font-bold text-lg">W3</span>
                 </div>
-              )}
+                <h1 className="text-xl font-bold text-white">Web3 Bookmarks</h1>
+                {isSupabaseConnected && (
+                  <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                    已同步
+                  </span>
+                )}
+              </div>
 
-              {/* Add buttons */}
-              <button
-                onClick={() => setIsAddBookmarkOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                添加书签
-              </button>
-
-              <button
-                onClick={() => setIsAddCategoryOpen(true)}
-                className="p-2 hover:bg-web3-border rounded-lg transition-colors"
-                title="添加分类"
-              >
-                <Settings className="w-5 h-5 text-gray-400" />
-              </button>
-
-              {/* Import/Export */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={exportData}
-                  className="p-2 hover:bg-web3-border rounded-lg transition-colors"
-                  title="导出数据"
-                >
-                  <Download className="w-5 h-5 text-gray-400" />
-                </button>
-                <label className="p-2 hover:bg-web3-border rounded-lg transition-colors cursor-pointer" title="导入数据">
-                  <Upload className="w-5 h-5 text-gray-400" />
+              <div className="flex items-center gap-3">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
-                    type="file"
-                    accept=".json"
-                    onChange={importData}
-                    className="hidden"
+                    type="text"
+                    placeholder="搜索书签..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-64 pl-10 pr-4 py-2 bg-web3-dark border border-web3-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
                   />
-                </label>
+                </div>
+
+                {/* Bulk actions */}
+                {selectedBookmarks.size > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-web3-accent/20 rounded-lg border border-web3-accent/30">
+                    <span className="text-sm text-web3-accent">
+                      已选择 {selectedBookmarks.size} 个
+                    </span>
+                    <button
+                      onClick={openSelectedBookmarks}
+                      className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
+                      title="一键打开"
+                    >
+                      <ExternalLink className="w-4 h-4 text-web3-accent" />
+                    </button>
+                    <button
+                      onClick={clearSelection}
+                      className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
+                      title="清除选择"
+                    >
+                      <span className="text-web3-accent text-lg leading-none">×</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Add buttons */}
+                <button
+                  onClick={() => setIsAddBookmarkOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  添加书签
+                </button>
+
+                <button
+                  onClick={() => setIsAddCategoryOpen(true)}
+                  className="p-2 hover:bg-web3-border rounded-lg transition-colors"
+                  title="添加分类"
+                >
+                  <Settings className="w-5 h-5 text-gray-400" />
+                </button>
+
+                {/* Import/Export */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={exportData}
+                    className="p-2 hover:bg-web3-border rounded-lg transition-colors"
+                    title="导出数据"
+                  >
+                    <Download className="w-5 h-5 text-gray-400" />
+                  </button>
+                  <label className="p-2 hover:bg-web3-border rounded-lg transition-colors cursor-pointer" title="导入数据">
+                    <Upload className="w-5 h-5 text-gray-400" />
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={importData}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {searchQuery ? (
-          <SearchResults
-            bookmarks={filteredBookmarks}
-            categories={categories}
-            onEdit={setEditingBookmark}
-            onDelete={deleteBookmark}
-            onToggleSelect={toggleBookmarkSelection}
-            selectedBookmarks={selectedBookmarks}
-          />
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={categories.map((c) => c.id)}
-              strategy={verticalListSortingStrategy}
+        {/* Main content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {searchQuery ? (
+            <SearchResults
+              bookmarks={filteredBookmarks}
+              categories={categories}
+              onEdit={setEditingBookmark}
+              onDelete={deleteBookmark}
+              onToggleSelect={toggleBookmarkSelection}
+              selectedBookmarks={selectedBookmarks}
+            />
+          ) : (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-6">
-                {categories.map((category) => (
-                  <CategorySection
-                    key={category.id}
-                    category={category}
-                    bookmarks={bookmarks.filter((b) => b.category_id === category.id)}
-                    onEditBookmark={setEditingBookmark}
-                    onDeleteBookmark={deleteBookmark}
-                    onDeleteCategory={deleteCategory}
-                    onToggleSelect={toggleBookmarkSelection}
-                    selectedBookmarks={selectedBookmarks}
-                    onReorderBookmarks={(newBookmarks) => {
-                      const otherBookmarks = bookmarks.filter(
-                        (b) => b.category_id !== category.id
-                      )
-                      saveBookmarks([...otherBookmarks, ...newBookmarks])
-                    }}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </main>
+              <SortableContext
+                items={categories.map((c) => c.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-6">
+                  {categories.map((category) => (
+                    <CategorySection
+                      key={category.id}
+                      category={category}
+                      bookmarks={bookmarks.filter((b) => b.category_id === category.id)}
+                      onEditBookmark={setEditingBookmark}
+                      onDeleteBookmark={deleteBookmark}
+                      onDeleteCategory={deleteCategory}
+                      onToggleSelect={toggleBookmarkSelection}
+                      selectedBookmarks={selectedBookmarks}
+                      onReorderBookmarks={(newBookmarks) => {
+                        const otherBookmarks = bookmarks.filter(
+                          (b) => b.category_id !== category.id
+                        )
+                        saveBookmarks([...otherBookmarks, ...newBookmarks])
+                      }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          )}
+        </main>
 
-      {/* Modals */}
-      <AddBookmarkModal
-        isOpen={isAddBookmarkOpen || editingBookmark !== null}
-        onClose={() => {
-          setIsAddBookmarkOpen(false)
-          setEditingBookmark(null)
-        }}
-        onSubmit={editingBookmark ? updateBookmark : addBookmark}
-        categories={categories}
-        initialData={editingBookmark}
-      />
+        {/* Modals */}
+        <AddBookmarkModal
+          isOpen={isAddBookmarkOpen || editingBookmark !== null}
+          onClose={() => {
+            setIsAddBookmarkOpen(false)
+            setEditingBookmark(null)
+          }}
+          onSubmit={editingBookmark ? updateBookmark : addBookmark}
+          categories={categories}
+          initialData={editingBookmark}
+        />
 
-      <AddCategoryModal
-        isOpen={isAddCategoryOpen}
-        onClose={() => setIsAddCategoryOpen(false)}
-        onSubmit={addCategory}
-      />
-    </div>
+        <AddCategoryModal
+          isOpen={isAddCategoryOpen}
+          onClose={() => setIsAddCategoryOpen(false)}
+          onSubmit={addCategory}
+        />
+      </div>
+    </PasswordGate>
   )
 }
 
