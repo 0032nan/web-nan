@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import './index.css'
 
 function App() {
   const [categories, setCategories] = useState([])
@@ -8,14 +9,12 @@ function App() {
 
   useEffect(() => {
     try {
-      // 模拟从 localStorage 加载数据
       const savedData = localStorage.getItem('web3-bookmarks-data-v2')
       if (savedData) {
         const parsed = JSON.parse(savedData)
         setCategories(parsed.categories || [])
         setBookmarks(parsed.bookmarks || [])
       } else {
-        // 默认数据
         setCategories([
           { id: '1', name: 'DEX', order: 1 },
           { id: '2', name: '借贷', order: 2 },
@@ -35,40 +34,46 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', color: 'white', background: '#0a0a1a', minHeight: '100vh' }}>
-        <h1 style={{ color: '#00d4ff' }}>Loading...</h1>
+      <div className="min-h-screen bg-web3-dark flex items-center justify-center">
+        <h1 className="text-web3-accent text-2xl">Loading...</h1>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: 'red', background: '#0a0a1a', minHeight: '100vh' }}>
-        <h1>Error: {error}</h1>
+      <div className="min-h-screen bg-web3-dark flex items-center justify-center">
+        <h1 className="text-red-500 text-2xl">Error: {error}</h1>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '20px', color: 'white', background: '#0a0a1a', minHeight: '100vh' }}>
-      <h1 style={{ color: '#00d4ff' }}>Web3 Bookmarks</h1>
-      <p>Categories: {categories.length}</p>
-      <p>Bookmarks: {bookmarks.length}</p>
-      <div>
+    <div className="min-h-screen bg-web3-dark text-white p-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-web3-accent mb-2">Web3 Bookmarks</h1>
+        <p className="text-gray-400">Categories: {categories.length} | Bookmarks: {bookmarks.length}</p>
+      </header>
+
+      <div className="space-y-6">
         {categories.map(cat => (
-          <div key={cat.id} style={{ margin: '10px 0', padding: '10px', background: '#1a1a2e', borderRadius: '5px' }}>
-            <h3>{cat.name}</h3>
-            <ul>
+          <div key={cat.id} className="bg-web3-card border border-web3-border rounded-xl p-6">
+            <h2 className="text-xl font-semibold text-white mb-4">{cat.name}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {bookmarks
                 .filter(b => b.category_id === cat.id)
                 .map(b => (
-                  <li key={b.id}>
-                    <a href={b.url} style={{ color: '#00d4ff' }} target="_blank" rel="noopener noreferrer">
-                      {b.title}
-                    </a>
-                  </li>
+                  <a
+                    key={b.id}
+                    href={b.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-4 bg-web3-dark border border-web3-border rounded-lg hover:border-web3-accent transition-colors"
+                  >
+                    <h3 className="font-medium text-web3-accent">{b.title}</h3>
+                  </a>
                 ))}
-            </ul>
+            </div>
           </div>
         ))}
       </div>
