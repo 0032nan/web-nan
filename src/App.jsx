@@ -1,11 +1,84 @@
 import React, { useState, useEffect } from 'react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import './index.css'
+
+// 可排序的分类组件
+function SortableCategory({ cat, bookmarks }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: cat.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-web3-card border border-web3-border rounded-xl p-6"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          {...attributes}
+          {...listeners}
+          className="p-2 hover:bg-web3-border rounded cursor-grab"
+        >
+          ⋮⋮
+        </button>
+        <h2 className="text-xl font-semibold text-white">{cat.name}</h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {bookmarks
+          .filter(b => b.category_id === cat.id)
+          .map(b => (
+            <a
+              key={b.id}
+              href={b.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block p-4 bg-web3-dark border border-web3-border rounded-lg hover:border-web3-accent transition-colors"
+            >
+              <h3 className="font-medium text-web3-accent">{b.title}</h3>
+            </a>
+          ))}
+      </div>
+    </div>
+  )
+}
 
 function App() {
   const [categories, setCategories] = useState([])
   const [bookmarks, setBookmarks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   useEffect(() => {
     try {
@@ -32,6 +105,18 @@ function App() {
     }
   }, [])
 
+  const handleDragEnd = (event) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      setCategories((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id)
+        const newIndex = items.findIndex((item) => item.id === over.id)
+        return arrayMove(items, oldIndex, newIndex)
+      })
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-web3-dark flex items-center justify-center">
@@ -55,28 +140,26 @@ function App() {
         <p className="text-gray-400">Categories: {categories.length} | Bookmarks: {bookmarks.length}</p>
       </header>
 
-      <div className="space-y-6">
-        {categories.map(cat => (
-          <div key={cat.id} className="bg-web3-card border border-web3-border rounded-xl p-6">
-            <h2 className="text-xl font-semibold text-white mb-4">{cat.name}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bookmarks
-                .filter(b => b.category_id === cat.id)
-                .map(b => (
-                  <a
-                    key={b.id}
-                    href={b.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block p-4 bg-web3-dark border border-web3-border rounded-lg hover:border-web3-accent transition-colors"
-                  >
-                    <h3 className="font-medium text-web3-accent">{b.title}</h3>
-                  </a>
-                ))}
-            </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={categories.map(c => c.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="space-y-6">
+            {categories.map(cat => (
+              <SortableCategory
+                key={cat.id}
+                cat={cat}
+                bookmarks={bookmarks}
+              />
+            ))}
           </div>
-        ))}
-      </div>
+        </SortableContext>
+      </DndContext>
     </div>
   )
 }
