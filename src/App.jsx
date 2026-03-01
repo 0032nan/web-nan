@@ -6,7 +6,6 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -14,7 +13,10 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
-import { Search, Plus, Settings, Download, Upload, ExternalLink } from 'lucide-react'
+import { 
+  Search, Plus, Settings, Download, Upload, ExternalLink,
+  TrendingUp, Layers, CheckCircle, Clock, Star, BarChart3
+} from 'lucide-react'
 import { localDB, supabase } from './lib/supabase'
 import CategorySection from './components/CategorySection'
 import AddBookmarkModal from './components/AddBookmarkModal'
@@ -22,13 +24,36 @@ import AddCategoryModal from './components/AddCategoryModal'
 import SearchResults from './components/SearchResults'
 import './index.css'
 
+// 粒子背景组件
+function ParticlesBackground() {
+  return (
+    <div className="particles-bg">
+      <div className="cyber-grid-animated"></div>
+    </div>
+  )
+}
+
+// 统计卡片组件
+function StatCard({ icon: Icon, label, value, color }) {
+  return (
+    <div className="glass-card-enhanced rounded-xl p-4 flex items-center gap-4">
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+      <div>
+        <p className="text-gray-400 text-sm">{label}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+      </div>
+    </div>
+  )
+}
+
 // 密码保护组件
 function PasswordGate({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
-  // 从 localStorage 检查是否已登录
   useEffect(() => {
     const auth = localStorage.getItem('web3-bookmarks-auth')
     if (auth === 'true') {
@@ -38,7 +63,6 @@ function PasswordGate({ children }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // 默认密码: nan123 (你可以修改)
     if (password === 'nan123') {
       localStorage.setItem('web3-bookmarks-auth', 'true')
       setIsAuthenticated(true)
@@ -56,42 +80,41 @@ function PasswordGate({ children }) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-web3-dark flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-web3-card border border-web3-border rounded-2xl p-8 shadow-2xl">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">W3</span>
+      <div className="min-h-screen bg-web3-dark flex items-center justify-center p-4 relative overflow-hidden">
+        <ParticlesBackground />
+        <div className="relative z-10 w-full max-w-md">
+          <div className="glass-card-enhanced rounded-2xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center pulse-glow">
+                <span className="text-white font-bold text-3xl">W3</span>
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2 gradient-text">Web3 Bookmarks</h1>
+              <p className="text-gray-400">请输入密码访问</p>
             </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Web3 Bookmarks</h1>
-            <p className="text-gray-400">请输入密码访问</p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="输入密码"
+                  className="w-full px-4 py-3 bg-web3-dark/50 border border-web3-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent transition-all"
+                />
+              </div>
+
+              {error && (
+                <p className="text-red-400 text-sm text-center">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                className="w-full px-4 py-3 bg-gradient-to-r from-web3-accent to-purple-600 hover:from-web3-accent-hover hover:to-purple-700 text-white rounded-lg font-medium transition-all pulse-glow"
+              >
+                进入系统
+              </button>
+            </form>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="输入密码"
-                className="w-full px-4 py-3 bg-web3-dark border border-web3-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
-              />
-            </div>
-
-            {error && (
-              <p className="text-red-400 text-sm">{error}</p>
-            )}
-
-            <button
-              type="submit"
-              className="w-full px-4 py-3 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg font-medium transition-colors"
-            >
-              进入
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-500">
-            提示: 默认密码是 nan123
-          </p>
         </div>
       </div>
     )
@@ -102,7 +125,7 @@ function PasswordGate({ children }) {
       {children}
       <button
         onClick={handleLogout}
-        className="fixed bottom-4 right-4 px-4 py-2 bg-web3-card border border-web3-border text-gray-400 rounded-lg hover:text-white transition-colors text-sm"
+        className="fixed bottom-4 right-4 px-4 py-2 bg-web3-card/80 border border-web3-border text-gray-400 rounded-lg hover:text-white transition-colors text-sm backdrop-blur-sm z-50"
       >
         退出登录
       </button>
@@ -122,17 +145,10 @@ function App() {
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false)
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  // Load data on mount
   useEffect(() => {
     loadData()
     checkSupabaseConnection()
@@ -140,7 +156,7 @@ function App() {
 
   const checkSupabaseConnection = async () => {
     try {
-      const { data, error } = await supabase.from('categories').select('count')
+      const { error } = await supabase.from('categories').select('count')
       setIsSupabaseConnected(!error)
     } catch {
       setIsSupabaseConnected(false)
@@ -164,33 +180,22 @@ function App() {
     setBookmarks(newBookmarks)
   }, [])
 
-  // Drag and drop handlers for categories
-  const handleDragStart = (event) => {
-    setActiveId(event.active.id)
-  }
-
   const handleDragEnd = (event) => {
     const { active, over } = event
     setActiveId(null)
-
     if (over && active.id !== over.id) {
       const isCategory = categories.some((c) => c.id === active.id)
-      
       if (isCategory) {
         const oldIndex = categories.findIndex((c) => c.id === active.id)
         const newIndex = categories.findIndex((c) => c.id === over.id)
-        
         const newCategories = arrayMove(categories, oldIndex, newIndex).map((cat, idx) => ({
-          ...cat,
-          order: idx + 1,
+          ...cat, order: idx + 1,
         }))
-        
         saveCategories(newCategories)
       }
     }
   }
 
-  // Bookmark operations
   const addBookmark = (bookmark) => {
     const categoryBookmarks = bookmarks.filter((b) => b.category_id === bookmark.category_id)
     const newBookmark = {
@@ -199,8 +204,7 @@ function App() {
       order: categoryBookmarks.length + 1,
       created_at: new Date().toISOString(),
     }
-    const newBookmarks = [...bookmarks, newBookmark]
-    saveBookmarks(newBookmarks)
+    saveBookmarks([...bookmarks, newBookmark])
     setIsAddBookmarkOpen(false)
   }
 
@@ -215,8 +219,7 @@ function App() {
 
   const deleteBookmark = (id) => {
     if (confirm('确定要删除这个书签吗？')) {
-      const newBookmarks = bookmarks.filter((b) => b.id !== id)
-      saveBookmarks(newBookmarks)
+      saveBookmarks(bookmarks.filter((b) => b.id !== id))
       setSelectedBookmarks((prev) => {
         const next = new Set(prev)
         next.delete(id)
@@ -225,15 +228,9 @@ function App() {
     }
   }
 
-  // Category operations
   const addCategory = (category) => {
-    const newCategory = {
-      ...category,
-      id: Date.now().toString(),
-      order: categories.length + 1,
-    }
-    const newCategories = [...categories, newCategory]
-    saveCategories(newCategories)
+    const newCategory = { ...category, id: Date.now().toString(), order: categories.length + 1 }
+    saveCategories([...categories, newCategory])
     setIsAddCategoryOpen(false)
   }
 
@@ -246,34 +243,21 @@ function App() {
     }
   }
 
-  // Bulk operations
   const toggleBookmarkSelection = (id) => {
     setSelectedBookmarks((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
       return next
     })
   }
 
   const openSelectedBookmarks = () => {
-    const selectedUrls = bookmarks
-      .filter((b) => selectedBookmarks.has(b.id))
-      .map((b) => b.url)
-    
-    selectedUrls.forEach((url) => {
-      window.open(url, '_blank')
-    })
+    bookmarks.filter((b) => selectedBookmarks.has(b.id)).forEach((b) => window.open(b.url, '_blank'))
   }
 
-  const clearSelection = () => {
-    setSelectedBookmarks(new Set())
-  }
+  const clearSelection = () => setSelectedBookmarks(new Set())
 
-  // Import/Export
   const exportData = () => {
     const data = localDB.exportData()
     const blob = new Blob([data], { type: 'application/json' })
@@ -303,37 +287,45 @@ function App() {
     event.target.value = ''
   }
 
-  // Filter bookmarks by search
   const filteredBookmarks = searchQuery
-    ? bookmarks.filter(
-        (b) =>
-          b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          b.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? bookmarks.filter((b) =>
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.tags?.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : []
 
+  // 统计数据
+  const doneCount = bookmarks.filter(b => b.status === 'done').length
+  const focusCount = bookmarks.filter(b => b.status === 'focus').length
+  const pendingCount = bookmarks.filter(b => b.status === 'pending').length
+
   return (
     <PasswordGate>
-      <div className="min-h-screen bg-web3-dark">
+      <div className="min-h-screen bg-web3-dark relative">
+        <ParticlesBackground />
+        <div className="scan-line"></div>
+
         {/* Header */}
         <header className="sticky top-0 z-40 bg-web3-card/80 backdrop-blur-md border-b border-web3-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center web3-glow">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-web3-accent to-purple-600 flex items-center justify-center pulse-glow">
                   <span className="text-white font-bold text-lg">W3</span>
                 </div>
-                <h1 className="text-xl font-bold text-white">Web3 Bookmarks</h1>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Web3 Bookmarks</h1>
+                  <p className="text-xs text-gray-400 tech-text">V 2.0 // SYSTEM READY</p>
+                </div>
                 {isSupabaseConnected && (
                   <span className="px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                    已同步
+                    ● SYNCED
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Search */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -341,67 +333,41 @@ function App() {
                     placeholder="搜索书签..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64 pl-10 pr-4 py-2 bg-web3-dark border border-web3-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
+                    className="w-64 pl-10 pr-4 py-2 bg-web3-dark/50 border border-web3-border rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-web3-accent focus:ring-1 focus:ring-web3-accent"
                   />
                 </div>
 
-                {/* Bulk actions */}
                 {selectedBookmarks.size > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-web3-accent/20 rounded-lg border border-web3-accent/30">
-                    <span className="text-sm text-web3-accent">
-                      已选择 {selectedBookmarks.size} 个
-                    </span>
-                    <button
-                      onClick={openSelectedBookmarks}
-                      className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
-                      title="一键打开"
-                    >
+                    <span className="text-sm text-web3-accent">已选择 {selectedBookmarks.size} 个</span>
+                    <button onClick={openSelectedBookmarks} className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors">
                       <ExternalLink className="w-4 h-4 text-web3-accent" />
                     </button>
-                    <button
-                      onClick={clearSelection}
-                      className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors"
-                      title="清除选择"
-                    >
+                    <button onClick={clearSelection} className="p-1.5 hover:bg-web3-accent/20 rounded-md transition-colors">
                       <span className="text-web3-accent text-lg leading-none">×</span>
                     </button>
                   </div>
                 )}
 
-                {/* Add buttons */}
                 <button
                   onClick={() => setIsAddBookmarkOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-web3-accent to-purple-600 hover:from-web3-accent-hover hover:to-purple-700 text-white rounded-lg text-sm font-medium transition-all pulse-glow"
                 >
                   <Plus className="w-4 h-4" />
                   添加书签
                 </button>
 
-                <button
-                  onClick={() => setIsAddCategoryOpen(true)}
-                  className="p-2 hover:bg-web3-border rounded-lg transition-colors"
-                  title="添加分类"
-                >
+                <button onClick={() => setIsAddCategoryOpen(true)} className="p-2 hover:bg-web3-border rounded-lg transition-colors">
                   <Settings className="w-5 h-5 text-gray-400" />
                 </button>
 
-                {/* Import/Export */}
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={exportData}
-                    className="p-2 hover:bg-web3-border rounded-lg transition-colors"
-                    title="导出数据"
-                  >
+                  <button onClick={exportData} className="p-2 hover:bg-web3-border rounded-lg transition-colors" title="导出数据">
                     <Download className="w-5 h-5 text-gray-400" />
                   </button>
                   <label className="p-2 hover:bg-web3-border rounded-lg transition-colors cursor-pointer" title="导入数据">
                     <Upload className="w-5 h-5 text-gray-400" />
-                    <input
-                      type="file"
-                      accept=".json"
-                      onChange={importData}
-                      className="hidden"
-                    />
+                    <input type="file" accept=".json" onChange={importData} className="hidden" />
                   </label>
                 </div>
               </div>
@@ -410,7 +376,17 @@ function App() {
         </header>
 
         {/* Main content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+          {/* 统计面板 */}
+          {!searchQuery && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatCard icon={Layers} label="总书签" value={bookmarks.length} color="bg-blue-500/20" />
+              <StatCard icon={CheckCircle} label="已完成" value={doneCount} color="bg-emerald-500/20" />
+              <StatCard icon={Star} label="重点关注" value={focusCount} color="bg-purple-500/20" />
+              <StatCard icon={Clock} label="待处理" value={pendingCount} color="bg-yellow-500/20" />
+            </div>
+          )}
+
           {searchQuery ? (
             <SearchResults
               bookmarks={filteredBookmarks}
@@ -424,13 +400,10 @@ function App() {
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
+              onDragStart={(e) => setActiveId(e.active.id)}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext
-                items={categories.map((c) => c.id)}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={categories.map((c) => c.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-6">
                   {categories.map((category) => (
                     <CategorySection
@@ -443,9 +416,7 @@ function App() {
                       onToggleSelect={toggleBookmarkSelection}
                       selectedBookmarks={selectedBookmarks}
                       onReorderBookmarks={(newBookmarks) => {
-                        const otherBookmarks = bookmarks.filter(
-                          (b) => b.category_id !== category.id
-                        )
+                        const otherBookmarks = bookmarks.filter((b) => b.category_id !== category.id)
                         saveBookmarks([...otherBookmarks, ...newBookmarks])
                       }}
                     />
@@ -456,13 +427,9 @@ function App() {
           )}
         </main>
 
-        {/* Modals */}
         <AddBookmarkModal
           isOpen={isAddBookmarkOpen || editingBookmark !== null}
-          onClose={() => {
-            setIsAddBookmarkOpen(false)
-            setEditingBookmark(null)
-          }}
+          onClose={() => { setIsAddBookmarkOpen(false); setEditingBookmark(null) }}
           onSubmit={editingBookmark ? updateBookmark : addBookmark}
           categories={categories}
           initialData={editingBookmark}
