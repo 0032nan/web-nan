@@ -406,10 +406,12 @@ body::after {
   border-left: none;
   border-top: none;
 }
+
 /* Web3 发光效果 */
 .web3-glow {
   box-shadow: 0 0 20px rgba(0, 212, 255, 0.3), 0 0 40px rgba(0, 212, 255, 0.2);
 }
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   body::before {
