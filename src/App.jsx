@@ -32,6 +32,8 @@ function App() {
   const [selectedBookmarks, setSelectedBookmarks] = useState(new Set())
   const [activeId, setActiveId] = useState(null)
   const [isSupabaseConnected, setIsSupabaseConnected] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -46,6 +48,7 @@ function App() {
 
   // Load data on mount
   useEffect(() => {
+    console.log('App mounted, loading data...')
     loadData()
     checkSupabaseConnection()
   }, [])
@@ -60,10 +63,21 @@ function App() {
   }
 
   const loadData = () => {
-    const cats = localDB.getCategories()
-    const marks = localDB.getBookmarks()
-    setCategories(cats.sort((a, b) => a.order - b.order))
-    setBookmarks(marks)
+    try {
+      setIsLoading(true)
+      setError(null)
+      const cats = localDB.getCategories()
+      const marks = localDB.getBookmarks()
+      console.log('Loaded categories:', cats.length, cats)
+      console.log('Loaded bookmarks:', marks.length, marks)
+      setCategories(cats.sort((a, b) => a.order - b.order))
+      setBookmarks(marks)
+      setIsLoading(false)
+    } catch (err) {
+      console.error('Error loading data:', err)
+      setError(err.message)
+      setIsLoading(false)
+    }
   }
 
   const saveCategories = useCallback((newCategories) => {
@@ -323,7 +337,26 @@ function App() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {searchQuery ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-web3-accent border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-gray-400">加载中...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mb-4">
+              <span className="text-2xl text-red-400">⚠️</span>
+            </div>
+            <h3 className="text-xl font-medium text-white mb-2">加载失败</h3>
+            <p className="text-gray-400 mb-4">{error}</p>
+            <button
+              onClick={loadData}
+              className="px-4 py-2 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg transition-colors"
+            >
+              重试
+            </button>
+          </div>
+        ) : searchQuery ? (
           <SearchResults
             bookmarks={filteredBookmarks}
             categories={categories}
@@ -332,6 +365,20 @@ function App() {
             onToggleSelect={toggleBookmarkSelection}
             selectedBookmarks={selectedBookmarks}
           />
+        ) : categories.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-20 h-20 rounded-full bg-web3-border flex items-center justify-center mb-4">
+              <span className="text-4xl">📂</span>
+            </div>
+            <h3 className="text-xl font-medium text-white mb-2">暂无分类</h3>
+            <p className="text-gray-400 mb-4">点击右上角设置按钮添加分类</p>
+            <button
+              onClick={() => setIsAddCategoryOpen(true)}
+              className="px-4 py-2 bg-web3-accent hover:bg-web3-accent-hover text-white rounded-lg transition-colors"
+            >
+              添加分类
+            </button>
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
